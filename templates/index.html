@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnomalyGuard — Credit Card Fraud Detection</title>
+  <meta name="description" content="Batch credit card fraud detection using unsupervised ML. Upload a CSV and detect anomalies instantly." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">AnomalyGuard</span>
+      </div>
+      <span class="badge">Unsupervised ML</span>
+    </div>
+  </header>
+
+  <!-- STATS BAR -->
+  <section class="stats-bar">
+    <div class="stat"><span class="stat-val">284,807</span><span class="stat-lbl">Transactions Trained</span></div>
+    <div class="stat"><span class="stat-val">2</span><span class="stat-lbl">ML Models</span></div>
+    <div class="stat"><span class="stat-val">30</span><span class="stat-lbl">Features Analyzed</span></div>
+    <div class="stat"><span class="stat-val">Real-time</span><span class="stat-lbl">Batch Detection</span></div>
+  </section>
+
+  <main>
+
+    <!-- UPLOAD CARD -->
+    <div class="card" id="uploadCard">
+      <div class="card-header">
+        <h1>Batch Transaction Analyzer</h1>
+        <p class="subtitle">Upload a CSV file of transactions — the model will scan all of them and flag any anomalies</p>
+      </div>
+
+      <!-- HOW IT WORKS -->
+      <div class="how-it-works">
+        <div class="step"><span class="step-num">1</span><span>Generate test CSV from your dataset</span></div>
+        <div class="step-arrow">→</div>
+        <div class="step"><span class="step-num">2</span><span>Upload the CSV here</span></div>
+        <div class="step-arrow">→</div>
+        <div class="step"><span class="step-num">3</span><span>See which transactions are fraud</span></div>
+      </div>
+
+      <!-- DROP ZONE -->
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📂</div>
+        <p class="drop-title">Drag & Drop your CSV file here</p>
+        <p class="drop-sub">or click to browse</p>
+        <p class="drop-hint">Expected columns: Time, V1–V28, Amount</p>
+        <input type="file" id="csvInput" accept=".csv" hidden />
+      </div>
+
+      <!-- FILE INFO -->
+      <div class="file-info hidden" id="fileInfo">
+        <span class="file-icon">📄</span>
+        <span id="fileName"></span>
+        <button id="clearFile" class="btn-clear">✕</button>
+      </div>
+
+      <button class="btn-predict" id="analyzeBtn" disabled>
+        <span id="analyzeLabel">🔍 Analyze Transactions</span>
+      </button>
+
+      <!-- SAMPLE FILES TIP -->
+      <div class="tip-box">
+        <strong>💡 Generate test files first:</strong>
+        <code>python scripts/generate_test_data.py</code>
+        <span>→ creates <strong>test_normal.csv</strong>, <strong>test_fraud.csv</strong>, <strong>test_mixed.csv</strong> in data/</span>
+      </div>
+    </div>
+
+    <!-- RESULTS CARD -->
+    <div class="card hidden" id="resultsCard">
+
+      <!-- SUMMARY STATS -->
+      <div class="result-header">
+        <h2>Analysis Results</h2>
+        <button class="btn-reset" id="resetBtn">🔄 Upload Another</button>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-box total">
+          <span class="sval" id="sTotal">0</span>
+          <span class="slbl">Total Transactions</span>
+        </div>
+        <div class="summary-box normal">
+          <span class="sval" id="sNormal">0</span>
+          <span class="slbl">✅ Normal</span>
+        </div>
+        <div class="summary-box fraud">
+          <span class="sval" id="sFraud">0</span>
+          <span class="slbl">🚨 Fraud Detected</span>
+        </div>
+        <div class="summary-box rate">
+          <span class="sval" id="sFraudPct">0%</span>
+          <span class="slbl">Fraud Rate</span>
+        </div>
+      </div>
+
+      <!-- FRAUD ALERT -->
+      <div class="fraud-alert hidden" id="fraudAlert">
+        🚨 <strong id="fraudAlertText"></strong> suspicious transactions detected!
+      </div>
+
+      <!-- RESULTS TABLE -->
+      <div class="table-wrap">
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Time (s)</th>
+              <th>Amount ($)</th>
+              <th>Isolation Forest</th>
+              <th>LOF</th>
+              <th>Autoencoder</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- STICKY BOTTOM BUTTON -->
+      <div class="sticky-bar">
+        <span class="sticky-info" id="stickyInfo"></span>
+        <button class="btn-new-csv" id="stickyReset">📂 Analyze New CSV</button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>Isolation Forest + LOF + Autoencoder (TensorFlow/Keras) · Flask · Unsupervised ML</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
