@@ -15,6 +15,7 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload():
+    # 1. Check file was sent
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
@@ -22,51 +23,46 @@ def upload():
     if not file.filename.endswith('.csv'):
         return jsonify({"error": "Only CSV files are accepted"}), 400
 
+    # 2. Read CSV
     try:
         df = pd.read_csv(io.StringIO(file.read().decode('utf-8')))
     except Exception as e:
-        return jsonify({"error": f"Could not read CSV: {str(e)}"}), 400
+        return jsonify({"error": f"Could not read CSV: {e}"}), 400
 
-    # Drop Class column if present (label — not needed for prediction)
+    # Remove label column if present (we don't use it)
     df = df.drop(columns=['Class'], errors='ignore')
 
+    # 3. Validate columns
     missing = [c for c in FEATURE_COLS if c not in df.columns]
     if missing:
         return jsonify({"error": f"Missing columns: {missing}"}), 400
+    # 4. Limit rows — model runs one-by-one, large files will hang
+    MAX_ROWS = 500
+    if len(df) > MAX_ROWS:
+        return jsonify({"error": f"Too many rows ({len(df):,}). Max allowed: {MAX_ROWS}. Use test_normal/fraud/mixed.csv instead."}), 400
 
+    # 5. Run prediction on each row
     results = []
     for idx, row in df[FEATURE_COLS].iterrows():
-        try:
-            pred = predict_anomaly(row.values.tolist())
-            results.append({
-                "row": idx + 1,
-                "time": round(float(row['Time']), 2),
-                "amount": round(float(row['Amount']), 2),
-                "result": pred['result'],
-                "is_anomaly": pred['is_anomaly'],
-                "isolation_forest": pred['isolation_forest'],
-                "lof": pred['lof'],
-                "autoencoder": pred['autoencoder'],
-                "recon_error": pred['recon_error'],
-            })
-        except Exception as e:
-            results.append({"row": idx + 1, "error": str(e)})
+        pred = predict_anomaly(row.values.tolist())
+        results.append({
+            "row":              idx + 1,
+            "time":             round(float(row['Time']), 2),
+            "amount":           round(float(row['Amount']), 2),
+            "is_anomaly":       pred['is_anomaly'],
+            "isolation_forest": pred['isolation_forest'],
+            "autoencoder":      pred['autoencoder'],
+        })
 
-    fraud_count  = sum(1 for r in results if r.get('is_anomaly'))
-    normal_count = len(results) - fraud_count
-
+    # 5. Summary stats
+    fraud_count = sum(1 for r in results if r['is_anomaly'])
     return jsonify({
         "total":        len(results),
         "fraud_count":  fraud_count,
-        "normal_count": normal_count,
-        "fraud_pct":    round(fraud_count / len(results) * 100, 1) if results else 0,
+        "normal_count": len(results) - fraud_count,
+        "fraud_pct":    round(fraud_count / len(results) * 100, 1),
         "transactions": results,
     })
-
-
-@app.route('/health')
-def health():
-    return jsonify({"status": "ok"})
 
 
 if __name__ == '__main__':

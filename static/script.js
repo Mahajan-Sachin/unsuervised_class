@@ -91,7 +91,6 @@ function showResults(data) {
     if (t.is_anomaly) tr.classList.add('row-fraud');
 
     const isoTag = tag(t.isolation_forest);
-    const lofTag  = tag(t.lof);
     const aeTag   = tag(t.autoencoder);
     const statusTag = t.is_anomaly
       ? '<span class="tag tag-anomaly">🚨 Fraud</span>'
@@ -102,7 +101,6 @@ function showResults(data) {
       <td>${t.time}</td>
       <td>$${t.amount}</td>
       <td>${isoTag}</td>
-      <td>${lofTag}</td>
       <td>${aeTag}</td>
       <td>${statusTag}</td>
     `;
